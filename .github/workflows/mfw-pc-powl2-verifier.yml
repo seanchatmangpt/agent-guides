@@ -1,0 +1,45 @@
+name: MFW PC-POWL2 verifier
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/mfw-pc-powl2-verifier.yml
+  push:
+    branches:
+      - agent/mfw-pc-powl2-verifier
+    paths:
+      - .github/workflows/mfw-pc-powl2-verifier.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-private-source:
+    name: Private MFW source policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Establish public hosted-runner standing
+        run: |
+          set -euo pipefail
+          date -u
+          uname -a
+          printf 'repository=%s\nref=%s\nsha=%s\n' \
+            "$GITHUB_REPOSITORY" "$GITHUB_REF" "$GITHUB_SHA"
+
+      - name: Run repository-scoped private verifier
+        uses: seanchatmangpt/mfw/.github/actions/pc-powl2-verify@agent/finish-pc-powl2-kernel
+        with:
+          mode: source
+
+      - name: Upload source-policy receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mfw-pc-powl2-source-policy
+          path: pc-powl2-source-policy.log
+          if-no-files-found: warn
+          retention-days: 14
